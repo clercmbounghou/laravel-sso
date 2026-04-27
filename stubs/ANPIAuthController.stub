@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use AnpiGabon\SSO\ANPIProvider;
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
+
+class ANPIAuthController extends Controller
+{
+    /**
+     * Étape 1 : rediriger l'utilisateur vers le serveur SSO ANPI.
+     */
+    public function redirect(): RedirectResponse
+    {
+        return Socialite::driver('anpi')
+            ->scopes(config('anpi-sso.scopes', ['profile', 'email']))
+            ->redirect();
+    }
+
+    /**
+     * Étape 2 : traiter le retour OAuth après authentification.
+     */
+    public function callback(Request $request): RedirectResponse
+    {
+        if ($request->has('error')) {
+            return redirect('/login')->withErrors([
+                'anpi' => match ($request->input('error')) {
+                    'access_denied' => 'Vous avez refusé l\'accès à ANPI-Gabon.',
+                    default         => 'Erreur SSO : ' . ($request->input('error_description') ?? $request->input('error')),
+                },
+            ]);
+        }
+
+        try {
+            $ssoUser = Socialite::driver('anpi')->user();
+        } catch (\Exception $e) {
+            return redirect('/login')->withErrors([
+                'anpi' => 'Impossible de contacter le serveur ANPI. Veuillez réessayer.',
+            ]);
+        }
+
+        $user = User::updateOrCreate(
+            ['anpi_id' => $ssoUser->getId()],
+            [
+                'name'               => $ssoUser->getName(),
+                'email'              => $ssoUser->getEmail(),
+                'avatar'             => $ssoUser->getAvatar(),
+                'anpi_token'         => $ssoUser->token,
+                'anpi_refresh_token' => $ssoUser->refreshToken,
+                'token_expires_at'   => now()->addSeconds(
+                    $ssoUser->expiresIn ?? config('anpi-sso.token_ttl', 86400)
+                ),
+                'password'           => bcrypt(Str::random(32)),
+            ]
+        );
+
+        Auth::login($user, remember: true);
+
+        return redirect()->intended('/dashboard');
+    }
+
+    /**
+     * Déconnecter localement et rediriger vers le logout du serveur SSO.
+     */
+    public function logout(Request $request): RedirectResponse
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        /** @var ANPIProvider $provider */
+        $provider  = Socialite::driver('anpi');
+        $returnUrl = config('app.url') . '/login';
+
+        return redirect($provider->getLogoutUrl($returnUrl));
+    }
+}

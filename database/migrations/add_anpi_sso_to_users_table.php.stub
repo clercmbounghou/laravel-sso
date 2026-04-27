@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('anpi_id')->nullable()->unique()->after('id');
+            $table->text('anpi_token')->nullable()->after('anpi_id');
+            $table->text('anpi_refresh_token')->nullable()->after('anpi_token');
+            $table->string('avatar')->nullable()->after('anpi_refresh_token');
+            $table->timestamp('token_expires_at')->nullable()->after('avatar');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn([
+                'anpi_id',
+                'anpi_token',
+                'anpi_refresh_token',
+                'avatar',
+                'token_expires_at',
+            ]);
+        });
+    }
+};

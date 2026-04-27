@@ -1,0 +1,43 @@
+{
+    "name": "anpi-gabon/laravel-sso",
+    "description": "Intégration OAuth 2.0 (SSO) pour les applications du périmètre ANPI-Gabon — Laravel Socialite driver.",
+    "keywords": ["laravel", "socialite", "oauth2", "sso", "anpi", "gabon"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "ANPI-Gabon — Direction des Systèmes d'Information",
+            "email": "dsi@anpi.ga",
+            "homepage": "https://investingabon.ga"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "laravel/socialite": "^5.0",
+        "illuminate/contracts": "^10.0|^11.0|^12.0",
+        "illuminate/support": "^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^8.0|^9.0",
+        "phpunit/phpunit": "^10.0|^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "AnpiGabon\\SSO\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "AnpiGabon\\SSO\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "AnpiGabon\\SSO\\ANPISSOServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
