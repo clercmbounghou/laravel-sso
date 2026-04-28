@@ -9,11 +9,15 @@ on:
 jobs:
   packagist:
     runs-on: ubuntu-latest
+    env:
+      PACKAGIST_USERNAME: ${{ secrets.PACKAGIST_USERNAME }}
+      PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
     steps:
       - name: Notify Packagist of update
         run: |
+          ENCODED_USERNAME=$(python3 -c "import urllib.parse, os; print(urllib.parse.quote(os.environ['PACKAGIST_USERNAME']))")
           RESPONSE=$(curl -s -X POST \
-            "https://packagist.org/api/update-package?username=${{ secrets.PACKAGIST_USERNAME }}&apiToken=${{ secrets.PACKAGIST_TOKEN }}" \
+            "https://packagist.org/api/update-package?username=${ENCODED_USERNAME}&apiToken=${PACKAGIST_TOKEN}" \
             -H "Content-Type: application/json" \
             -d '{"repository":{"url":"https://github.com/clercmbounghou/laravel-sso"}}')
           echo "Packagist response: $RESPONSE"
